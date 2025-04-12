@@ -1,0 +1,53 @@
+Inversion of Control (IoC) =>
+- prinsip pembuatan software yang menyerahkan kontrol untuk mengelola object atau program ke container di framework
+- Container IoC dapat memiliki kontrol untuk menjalankan eksekusi program, manajemen object dan melakukan abstraction terhadap kode program.
+- Spring sendiri adalah framework IoC yang memungkinkan kita untuk menyerahkan banyak pekerjaan dalam program kita ke spring framework.
+
+Container ApplicationContext
+- Seperti yang kita sebutkan sebelumnya bahwa IoC memungkinkan kita menyerahkan pengelolaan program atau object ke container di framework (Spring),
+- Pada Spring framework sendiri, container yang digunakan dinamakan ApplicationContext (Class Interface) dan merupakan inti dari Spring Framework.
+- Untuk membuat Application Context kita perlu membuat Configuration Class terlebih dahulu dengan menambahkan annotation @Configuration pada class. %File -> HelloWorldConfiguration
+- Setelah membuat class configuration, kita dapat membuat Application Context dengan configurasi yang ada pada Configuration Class. %File -> ApplicationContextTest
+
+Singleton
+- merupakan design pattern untuk pembuatan object yang hanya sekali saja dan dapat dipakai berulang-ulang. %File -> Database, DatabaseTest
+
+Bean
+- Bean merupakan istilah object yang dimasukkan ke dalam container IoC.
+- Secara default Bean berupa singleton, namun kita dapat mengubahnya menjadi bukan singleton.
+- untuk membuat bean, kita dapat membuat method pada class Configuration. Method tersebut kita berikan annotaion @Bean.
+- Nama bean diambil dari nama methodnya, sedangkan object bean diambil dari return value(object) dari method tersebut. %File -> BeanConfiguration
+- Bean akan secara otomatis dimanage oleh Application Context
+- Untuk mengakses bean kita dapat menggunakan method getBean milik class ApplicationContext. %File -> BeanTest
+
+(duplicate bean)
+- Pada spring kita bisa mendaftarkan beberapa bean dengan tipe data yang sama dengan catatan nama methodnya harus berbeda.
+- Dengan adanya beberapa bean dengan tipe data yang sama, kita wajib memanggil bean dengan nama methodnya,
+agar Spring tidak bingung harus mengambil bean yang mana. %File -> DuplicateConfiguration, DuplicateTest
+
+Primary Bean
+- Digunakan untuk menjadikan salah satu dari duplicate bean menjadi primary bean.
+- Sehingga primary bean dapat diambil, ketika memanggil duplicate bean tanpa nama method.
+- Untuk memilih bean primary, cukup tambahkan annotation @Primary. %File PrimaryDuplicateConfiguration, PrimaryBeanTest
+
+Mengubah nama Bean
+- Nama method secara default diambil sebagai nama bean pada application context.
+- Namun kita dapat mengubah nama bean sesuai dengan keinginan kita dengan mengisi method value pada annotation @Bean. %File RenameBeanConfiguration, RenameBeanTest
+
+Dependency Injection (DI)
+- Dalam bekerja dengan object, sering kali suatu object itu membutuhkan object lain untuk menjalankan prosesnya (Dependency).
+- Dependency Injection adalah metode atau metode untuk memasukkan object yang dibutuhkan ke dalam object yang membutuhkan secara otomatis.
+- Tanpa DI kita tetap bisa membuat aplikasi, namun ketika relasi antar Dependency semakin rumit dan kompleks, maka kita akan semakin kesusahan dalam memaintenance depedency tersebut. %File, DependencyInjectionTest, FooBar
+
+Spring Dependency Injection
+- Ketika kita membuat method untuk bean di Spring. Kita dapat menambahkan parameter pada bean tersebut.
+- Secara otomatis Spring akan mencarikan bean dengan tipe data yang sesuai dengan parameter yang dibutuhkan pada bean tersebut.
+- Jika spring tidak menemukan bean yang tipe datanya yang sesuai, maka spring akan mengembalikan error.
+- Dan jika spring menemukan lebih dari satu bean yang bertipe data yang sesuai, maka spring akan mengembalikan error,
+kecuali jika terdapat primary bean diantara bean yang memiliki tipe data yang duplikat. %File -> DependencyInjectionConfiguration, DependencyInjectionTest
+- Kita juga dapat memilih bean yang bertipe data duplikan, dengan menggunakan nama beannya dengan menambahkan annotation @Qualifier(value="namaBean"). %File -> DependencyInjectionConfiguration.
+
+Circular Dependency
+- Terjadi ketika depedency membutuhkan depedency lainnya hingga membentuk linkaran dependency.
+- Contohnya beanA membutuhkan beanB, beanB membutuhkan beanC, dan beanC membutuhkan beanA, sehingga membentuk yang dinamakan cyclic.
+- Ketika Cyclic ini terjadi, spring akan mendeteksinya dan mengembalikan error pada saat proses buildingnya.
