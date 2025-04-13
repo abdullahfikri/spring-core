@@ -51,3 +51,128 @@ Circular Dependency
 - Terjadi ketika depedency membutuhkan depedency lainnya hingga membentuk linkaran dependency.
 - Contohnya beanA membutuhkan beanB, beanB membutuhkan beanC, dan beanC membutuhkan beanA, sehingga membentuk yang dinamakan cyclic.
 - Ketika Cyclic ini terjadi, spring akan mendeteksinya dan mengembalikan error pada saat proses buildingnya.
+
+Depends On
+- Secara otomatis saat bean satu membutuhkan bean lain, maka bean yang dibutuhkan tersebut akan dibuat terlebih dahulu, sebelum bean yang membutuhkan dibuat.
+- Jika antara bean tidak memiliki ketergantungan, maka urutan bean yang dibuat akan dilakukan secara random atau dari atas ke bawah oleh spring.
+- Dalam kasus jika beanA harus dibuat sesudah beanB namun tidak saling berketergantungan, maka dapat ditambah annotation @DependsOn(value={"namaBean", "beanLain", ...})
+pada bean yang mau dibuat sesudah bean yang disebutkan pada anotasi tersebut. %File -> DependsOnConfiguration DependsOnTest
+
+LazyBean
+- Secara default semua bean akan dibuat ketika aplikasi pertama kali dijalankan (start up)
+- Namun kita juga dapat menentukan suatu bahwa suatu bean tidak akan dibuat sebelum bean tersebut dipanggil atau diakses,
+dengan menambahkan annotation @Lazy pada bean tersebut. %File LazyConfiguration, LazyTest
+
+Scope
+- Secara default setiap bean akan memiliki scope yang bersifat singleton.
+- Scope pada bean dapat diubah dengan menambahkan annotation @Scope(value="namaScope)
+- Ada beberapa jenis scope pada spring, yaitu
+- 1. singleton -> hanya dibuat sekali dalam Sprign IoC
+- 2. prototype -> Akan dibuat object baru setiap kali bean diakses.
+- 3. request -> akan dibuat baru per HTTP Request (WEB App)
+- 4. session -> akan dibuat baru per HTTP Session (WEB App)
+- 5. application -> akan dibuat baru per ServletContext (WEB App)
+- 6. websocket -> akan dibuat per WebSocket (WebSocket App)
+- %File -> ScopeConfiguration, ScopeTest
+
+Custom Scope
+- Jika scope yang disediakan oleh spring itu tidak mencover case kita, maka kita dapat mencustom scope pada spring
+- Untuk membuat custom scope, kita dapat membuat class baru dan implement interface Scope (org.springframework.beans.factory.config.Scope). %File -> DoubleScope
+- Setelah custom scope class dibuat, maka harus diregistrasikan pada bean CustomScopeConfigurer. %File -> CustomScopeConfiguration, CustomScopeTest.
+
+Life Cycle
+- Spring container itu memiliki alur hidup yaitu dari awal pertama kali spring dijalankan hingga nanti spring dimatikan.
+- Saat spring pertama kali dijalankan, Spring dapat memberitahu suatu bean bahwa bean tersebut sudah siap digunakan (semua dependency sudah dimasukkan).
+- Dan saat akan dimatikan, spring juga akan memberitahukan semua bean, bahwa bean-bean tersebut akan dihancurkan.
+Life Cycle Callback
+- Bean secara default tidak tau alur hidup spring, namun kita dapat berinteraksi dengan alur hidup spring jika dibutuhkan.
+- Caranya dengan mengimplementasikan interface InitializingBean dan DisposableBean.
+- InitializingBean digunakan ketika bean ingin bereaksi ketika setelah bean tersebut sudah siap untuk digunakan.
+- DisposableBean digunakan ketika bean bereaksi ketika sebelum bean tersebut akan dimatikan/dihancurkan.
+%File -> LifeCycleConfiguration, LifeCycleTest
+
+Life Cycle Annotation
+- Selain menggunakan implementasi interface InitializingBean dan DisposableBean, kita juga dapat menggunakan annotation untuk berinteraksi dengan spring lifecycle.
+- Pada annotation @Bean terdapat method:
+- 1. initMethod() yang digunakan untuk meregistrasikan method mana yang akan dieksekusi ketika akan dijalankan ketika setalah bean sudah siap digunakan.
+- 2. destroyMethod() digunakan untuk meregistrasikan method mana yang akan dipanggil sesaat sebelum bean akan dihancurkan. %File -> Server, LifeCycleAnnotationConfiguration, LifeCycleAnnotationTest.
+- (cocok ketika class bean tidak dapat diakses dan dimodifikasi, seperti class milik 3rd party atau library).
+- Method yang diregistrasikan harus tidak mempunyai parameter, dan return valuenya tidak akan diperdulikan sehingga direkomendasikan menggunakan void.
+- Selain menggunakan method yang ada pada annotation @bean, kita juga dapat menggunakan annotation
+- 1. @PostConstruct digunakan untuk menandai method yang dijalankan ketika sudah siap digunakan
+- 2. @PreDestroy digunakan untuk menandai method yang dijalankan sesaat sebelum bean dihancurkan. %File -> Server2, LifeCycleAnnotationConfiguration, LifeCycleAnnotationTest.
+- (cocok ketika class bean dapat diakses dan dimodifikasi)
+
+Import
+- Saat spring app sudah semakin besar, maka class configurationnya akan bertambah juga.
+- Spring mendukung import class lain ketika dibutuhkan
+- Dengan menggunakan annotation @Import, kita bisa melakukan import class-class configuration di satu file configuration. %File -> MainConfiguration, ImportTest
+
+ComponentScan
+- Semakin besar applikasi maka semakin banyak clas configuration yang perlu diimport.
+- Sehingga dapat menyulitkan atau menyusahkan untuk mengimport class satu persatu, dan annotation @Import akan semakin berantakan
+- Oleh karena ini pada spring 3.1 dikeluarkanlah annotation @ComponentScan
+yang dapat melakukan scanning terhadapat configuration yang ada pada suatu package dan sub packagenya. %File -> ScanConfiguration, ComponentScanTest
+
+Component
+- Selain menggunakan method dengan annotation @Bean, spring juga menyediakan cara untuk membuat bean dengan cara menandai class dengan annotation @Component
+- @Component hanya bisa membuat bean dengan satu type class. Sehingga jika ingin membuat beberapa bean dengan type yang sama,
+maka tetap harus menggunakan method dengan annotation @Bean.
+- @Component juga mendukung annotation yang digunakan oleh @Bean, seperti @Scope, @PostConstruct, @PreDestroy, @Lazy, @Primary, dan lain-lain
+- Penamaan component akan dilakukan secara otomatis oleh spring, tergantung bagaimana kita mengimport/menscan si component
+- Jika menggunakan @ComponentScan, maka nama classnya akan dijadikan nama bean dengan format camelCase. => productService
+- Jika menggunakan @Import, maka nama bean akan menjadi NamaClass.class.getName().
+- Selain itu kita juga dapat menggunakan method value pada annotation @Component untuk membuat nama bean secara menual => @Component(value ="namaBean").
+%File => ComponentConfiguration, ComponentTest, ProductService
+
+Dependency Injection @Component
+- DI pada @Component berbeda dengan @Bean, ada beberapa cara untuk melakukan injection dependecy, yaitu:
+
+Constructor-based Dependency Injection
+- Constructor pada class bisa digunakan untuk meninject bean lain yang dibutuhkan.
+- Spring akan secara otomatis mencarikan bean yang dibutuhkan pada constructor class tersebut.
+- Constructor DI secara default hanya mendukung satu method constructor.
+- Namun untuk kasus dimana dibutuhkan lebih dari satu method, spring menyediakan annotation @Autowired
+untuk menandai constructor mana yang akan digunakan oleh spring.
+%File -> ConstructorDIConfiguration, ConstructorDITest, ProductService
+
+Setter-Based Dependency Injection
+- Setter method pada class juga dapat dilakukan untuk melakukan injeksi bean class yang dibutuhkan.
+- Untuk melakukannya setter method tersebut harus ditambahkan annotation @Autowired, sehingga spring tau setter mana yang perlu diinject.
+- Setter-based bisa digabungkan dengan constructor-base,
+ketika ada kasus dimana satu bean diinject dengan constructor-based dan bean lain diinject dengan setter-based.
+%File -> CategoryService, SetterDIConfiguration, SetterDITest
+
+Field-based Dependecy Injection (NOT RECOMMENDED)
+- Bean juga bisa diinject langsung ke dalam field yang ada pada class.
+- Field yang perlu diinject harus diberi annotation @Autowired untuk menandakan field tersebut harus diinject oleh spring.
+- Filed bisa digabungkan dengan Setter-Based dan Constructor-based DI.
+- Khusus untuk Field-based DI sudah tidak direkomendasikan oleh Spring.
+%File -> CustomerService, FieldDIConfiguration, FieldDITest
+
+Qualifier
+- Jika terdapat beberapa bean yang memiliki tipe data yang sama, maka spring akan kebingungan dalam memilih bean yang akan digunakan.
+- Jika ada bean yang memiliki anotasi @Primary maka spring akan memilih bean tersebut.
+- Untuk memilih satu dari bean yang memiliki tipe data yang sama, spring menyediakan annotation @Qualifier untuk melakukan hal tersebut.
+- Annotation @Qualifier dapat digunakan pada constructor parameter, setter method ataupun field.
+%File -> QualifierConfiguration, CustomerConfiguration, QualifierTest, CustomerService2, CustomerRepository2.
+
+Optional Dependency
+- Default dependency pada bean di spring adalah wajib dan jika dependency yang dibutuhkan itu tidak ditemukan maka spring akan mengembalikan error.
+- Namun spring juga menyediakan opsi untuk membuat dependency itu optional, sehingga jika dependency tersebut tidak ditemukan,
+maka spring tidak mengembalikan nilai error.
+- Caranya adalah dengan membungkus dependency dengan menggunakan class java.util.Optional<T>
+- Optional<T> bisa digunakan pada anotasi @Bean (Method parameter) ataupun pada anotasi @Component (constructor parameter, setter method parameter, dan field).
+- %File -> OptionalTest, OptionalConfiguration
+- Selain Optional<T>, interface ObjectProvider<T> juga bisa digunakan untuk kasus optional dependency.
+- ObjectProvider<T> digunakan pada aplikasi java sebelum interface Optional<T> diperkenalkan java.
+- Selain menangani optional dependency, ObjectProvider<T> juga dapat mengambil semua bean yang memiliki tipe data yang sama.
+- Sehingga ObjectProvider<T> dapat dikatakan lebih fleksibel.
+%File -> MultiFoo, ObjectProviderConfigurationTest, ObjectProviderConfiguration
+
+Factory Bean
+- Pada kasus dimana sebuah class yang tidak ubah-ubah seperti class milik third party library,
+sehingga kita tidak dapat menambahkan annotation yang dibutuhkan pada class tersebut.
+- @Bean method dapat membuatkan bean untuk kasus yang seperti ini.
+- Atau spring juga memberikan opsi menggunakan @Component dengan syarat harus dibungkus di dalam class FactoryBean.
+%File -> PaymentGatewayClient, PaymentGatewayCLientFactoryBean, FactoryConfiguration, FactoryTest
