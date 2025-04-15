@@ -1,13 +1,11 @@
-package dev.mfikri.spring.core;
+package dev.mfikri.spring.core.commandapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BelajarSpringDasarApplication {
-
+public class CommandApplication {
     public static void main(String[] args) {
-        SpringApplication.run(BelajarSpringDasarApplication.class, args);
+        SpringApplication.run(CommandApplication.class, args);
     }
-
 }

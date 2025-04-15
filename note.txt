@@ -176,3 +176,111 @@ sehingga kita tidak dapat menambahkan annotation yang dibutuhkan pada class ters
 - @Bean method dapat membuatkan bean untuk kasus yang seperti ini.
 - Atau spring juga memberikan opsi menggunakan @Component dengan syarat harus dibungkus di dalam class FactoryBean.
 %File -> PaymentGatewayClient, PaymentGatewayCLientFactoryBean, FactoryConfiguration, FactoryTest
+
+Inheritance
+- Saat mengakses bean biasanya akan disebutkan nama tipe class bean tersebut, atau bisa juga menyebutkan nama parent class / parent interface bean.
+- Misalnya ada interface MerchantService, lalu ada class implementasinya yaitu MerchantServiceImpl.
+- Pada class MerchantServiceImpl akan diregistrasikan sebagai bean dengan menambahkan anotasi @Component.
+- Untuk mengakses bean tersebut, tipe data MerchantService atau MerchantServiceImpl dapat digunakan dan menghasilkan bean yang sama.
+- Namun perlu berhati-hati untuk tidak terjadi error duplikat, ketika interface MerchantService memiliki banyak bean turunan.
+%File -> MerchantService, MerchantServiceImpl, InheritanceConfiguration, InheritanceTest
+
+Bean Factory
+- Application Context adalah turunan dari Interface BeanFactory
+- BeanFactory merupakan interface kontrak untuk memanajemen bean di spring
+- Seperti method-method yang digunakan dalam mengambil bean adalah method kontrak yang ada pada BeanFactory
+- Bean Factory hanya dapat mengakses single bean. Artinya jika ada beberapa bean yang memiliki tipe data yang sama,
+untuk mengambil harus menyertakan nama bean yang akan diambil.
+- Untuk mengambil semua bean dengan tipe data yang sama,
+spring telah menyediakan caranya dengan menggunakan kontrak method pada interface Listable Bean Factory.
+- Listable Bean Factory merupakan turunan dari Bean Factory, dan Application Context juga merupakan turunan dari Listable Bean Factory
+%File -> BeanFactoryTest
+
+Bean Post Processor
+- Merupakan interface yang digunakan untuk memodifikasi proses pembuatan bean di application context.
+- Prisipnya seperti middleware, yang dimana class yang mengimplementasi interface ini akan dijalankan sebelum bean diinisiasi ataupun sesudah bean diinisiasi.
+- Karena flexible, Bean Post Processor dapat memodifikasi hasil dari object bean, walaupun tidak disarankan.
+- Untuk memahami Bean Post Processor, kita membuat skenario pembuatan unique id pada bean menggunakan Bean Post Processor.
+- Di mana kita membuat interface IdAware yang memiliki method kontrak setId(String id), untuk menetapkan nilai unique id,
+- Lalu kita membuat Bean Post Processor class yang mana, setiap bean yang mengimplementasi interface IdAware,
+ akan di lakukan setId(String id) menggunakan UUID.
+%File -> PostProcessorTest, IdGeneratorBeanPostProcessor, IdAware, Car.
+
+Ordered
+- Bean post processor dapat dibuat lebih dari satu kali, sehingga Bean post processor satu bisa dipanggil sebelum atau sesudah Bean post processor lain.
+- Secara default spring tidak menjamin urutan eksekusi dari Bean post processor.
+- Namun spring menyediakan interface Ordered yang bisa digunakan Bean post processor untuk mengatur urutan eksekusi sesuai dengan kebutuhan.
+- Semakin kecil nilai dari return getOrder maka semakin awal pula Bean post processor tersebut dieksekusi.
+%File -> OrderedTest, IdGeneratorBeanPostProcessor, PrefixIdGeneratorBeanPostProcessor, IdAware, Car.
+
+Aware
+- Merupakan super interface untuk semua Aware interface yang ada pada spring
+- Aware diperuntukkan sebagai penanda untuk spring agar menginject object yang dibutuhkan pada class yang kita buat.
+- Cara kerjanya seperti yang dilakukan sebelumnya dengan membuat IdAware dan menggunakan Idgenerator Bean Post Processor.
+- Namun kita tidak perlu lagi secara manual membuat Bean Post Processor.
+%File -> AuthService, AwareTest
+
+Bean-Factory Post Processor
+- Secara default kita akan jarang sekali membuat Application Context secara manual karena banyak sekali class yang sudah mengimplementasikan Application context tersebut.
+- Namun mungkin ada kondisi di mana kita perlu untuk memodifikasi internal Application Context, seperti misalnya kita membuat framework di atas Spring.
+- Spring merekomendasikan kita untuk menggunakan Bean-Factory Post Processor untuk kasus yang seperti ini.
+%File -> FooBeanFactoryPostProcessor, BeanFactoryPostProcessor
+
+Event Listener
+- Spring menyediakan fitur jika kita ingin menggunakan event untuk berkomunikasi dengan class lain yang bertugas sebagai listener event tersebut.
+- Untuk membuat event class objectnya harus merupakan turunan dari ApplicationEvent,
+- Dan untuk listenernya, class harus melakukan implementasi ke interface ApplicationListener<T> -> T merupakan tipe event yang ingin ditangkap.
+- Ketika kita ingin mengirimkan event, kita perlu bantuan object ApplicationEventPublisher
+sebagai object yang mengirimkan event ke semua listener yang membutuhkan event tersebut.
+%File -> User, LoginSuccessEvent, LoginSuccessListener, UserService, EventListenerTest
+
+Event Listener Annotation
+- Selain mengimplementasikan intervace ApplicationListener pada bean, untuk membuat listener.
+- Kita juga bisa menggunakan annotation @EventListener pada method-method yang ada pada bean.
+- Sehingga annotation @EventListener ini bersifat lebih flexible karena satu bean bisa mendengarkan beberapa event sekaligus,
+bahkan dapat menangkap tipe event yang berbeda pada satu bean.
+%File -> UserListener, EventListenerTest
+- Cara kerja annotation @EventListener ini adalah dengan memanfaatkan Bean Post Processor yang bernama EventListenerMethodProcessor
+- Yang mana method processor tersebut mendeteksi jika ada method pada bean yang menggunakan annotation @EventListener,
+maka spring akan otomatis membuatkan listener baru berdasarkan method tersebut dan meregistrasikannya ke ApplicationContext.addApplicationListener(listener).
+
+Spring Boot Application
+- Hadirnya Spring boot memudahkan developer spring app dalam mendevelop apps.
+- Spring boot menyediakan fitur otomatis dalam pembuatan Application Context.
+- Pada spring boot apps, anotasi @Configuration utama akan digantikan dengan anotasi @SpringBootApplication
+- Isi dari anotasi @SpringBootApplication gabungan @Configuration, @ComponentScan dan masih banyak anotasi lainnya yang dapat dihandle oleh spring boot secara otomatis.
+- Selain itu ada juga anotasi @SpringApplication yang memudahkan dalam membuatkan Application Context dan hal-hal yang dibutuhkan Spring boot application secara otomatis.
+- Untuk melakukan testing pada aplikasi spring boot, kita bisa menggunakan anotasi @SpringBootTest(classes={YourConfiguration.class}) pada class testing kita.
+- Dengan menambahkan anotasi @SpringBootTest, kita tidak perlu mengambil bean secara manual menggunakan ApplicationContext.
+Kita bisa menggunakan Dependency Injection menggunakan anotasi @Autowired.
+%File -> FooApplication, FooApplicationTest
+
+Startup failure
+- Spring boot juga memiliki fitur FaulureAnalyzer, yang mana akan sangat berguna untuk menganalisa error yang terjadi pada saat aplikasi pertama kali berjalan (StartUp).
+Sehingga memudahkan kita menganalisa kesalahan apa yang terjadi pada code kita.
+%File -> FooApplicationError, FooApplicationErrorTest
+
+Customizing Spring Application
+- Spring menyediakan opsi untuk kita jika ingin melakukan pengaturan terlebih dahulu sebelum application contextnya dibuat.
+- Cara lain selain menggunakan SpringApplication class untuk menjalankan spring boot, kita juga dapat menggunakan SpringApplicationBuilder class.
+%File -> SpringApplicationApps
+
+Spring Application Event
+- Di spring boot, banyak sekali event yang dikirimkan ketika applikasi spring boot berjalan dan event tersebut merupakan turunan dari SpringApplicationEvent class.
+- Kita bisa menangkap event-event tersebut jika dibutuhkan.
+- Beberapa event di spring boot di trigger bahkan sebelum spring membuat Application Context.
+- Sehingga jika kita membuat bean listener untuk menangkap event tersebut, maka event tersebut tidak akan tertangkap dikarenakan beannya belum terbuat.
+- Olehkarena itu untuk lebih aman, kita bisa menambahkan listener ketika membuat SpringApplication bukan lagi sebagai bean.
+%File -> AppStartingListener, ListenerApps
+
+Command Line Runner
+- Kadang ada kasus di mana perlu mengirimkan argumen-argumen yang ada pada main method aplikasi spring boot ke bean yang membutuhkan.
+- Spring Application dapat mengakomodasi kasus seperti itu, kita hanya perlu membuat bean yang mengimplementasikan interface CommandLineRunner.
+- Dan CommandLineRunner tersebut akan dijalankan secara otomatis pada saat applikasi berjalan.
+%File -> CommandApplication, LogCommandlineRunner, LogCommandlineRunner2
+
+Application Runner
+- Mirip seperti Command Line Runner, Application runner juga menerima argumen yang dikirimkan oleh main method spring application.
+- Namun perbedaannya terletak pada argumennya yang diterima oleh Application Runner akan di wrap ke dalam object ApplicationArguments.
+- Object ApplicationArguments memiliki fitur-fitur untuk melakukan parsing argumennya.
+%File -> RunnerApplication, SimpleRunner.
